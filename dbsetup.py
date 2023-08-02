@@ -65,15 +65,17 @@ def initdb(path="main.db"):
     c.execute("""CREATE TABLE IF NOT EXISTS ClassTypes (
             classTypeID INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(50) NOT NULL UNIQUE,
+            description VARCHAR(500),
             lowerAge INTEGER,
             upperAge INTEGER
                             CHECK(upperAge >= lowerAge OR
                                   upperAge IS NULL OR
                                   lowerAge IS NULL),
-            description VARCHAR(500),
             capacity INTEGER,
             length INTEGER
-                            CHECK(length <= 1440)
+                            CHECK(length <= 1440),
+            price REAL
+                            CHECK(price = ROUND(price,2))
 
             )""")
 
@@ -84,7 +86,7 @@ def initdb(path="main.db"):
             classID INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
             classTypeID INTEGER NOT NULL,
             customName VARCHAR(50),
-            dateTime VARCHAR(19)
+            dateTime VARCHAR(26)
                             CHECK(dateTime LIKE '____-__-__ __:__:__'),
                             
             FOREIGN KEY (classTypeID) REFERENCES ClassTypes(classTypeID)
@@ -102,7 +104,7 @@ def initdb(path="main.db"):
             )""")
 
 
-    #Create instructor allocation table
+    #Create instructor assignments table
     c.execute("""CREATE TABLE IF NOT EXISTS InstructorAssignments (
             allocationID INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
             classID INTEGER NOT NULL,
@@ -188,9 +190,10 @@ def initdb(path="main.db"):
             rentalID INTEGER NOT NULL UNIQUE PRIMARY KEY,
             customerID INTEGER,
             equipmentItemID INTEGER,
-            rentalStart VARCHAR(26),
-            rentalEnd INTEGER,
-            
+            rentalStart VARCHAR(26)
+                            CHECK(rentalStart LIKE '____-__-__ __:__:__'),
+            rentalEnd INTEGER
+                            CHECK(rentalEnd LIKE '____-__-__ __:__:__'),
             FOREIGN KEY(customerID) REFERENCES Customers(customer_id),
             FOREIGN KEY(equipmentItemID) REFERENCES Equipment(equipmentItemID))""")
 
@@ -216,6 +219,20 @@ def demodb():
 
     conn = sqlite3.connect("main.db")
     c = conn.cursor()
+
+
+
+    #IMPORTANT NOTE
+    #This script is ineffiecient, could, and probably should be rewritten
+    #It serves the purpose of adding demo data for testing purposes
+    #It is bad
+    #Very bad
+    #This is recognised
+
+    #POTENTIAL OPTION - could simplify and optimise following: rentals
+
+    #ALSO RECOGNISED - was this an actual input system it would be very easy for sql injection
+    #Actual system will use proper method using ?s and other brackets
 
 
     #Fill accounts table with demo data - have to use loop as SQLITE3 does not support adding multiple records in one go
@@ -337,7 +354,7 @@ def demodb():
 
 
     #Fill rentals
-    now = datetime.datetime.now()
+    now = datetime.datetime.now().replace(microsecond=0)
     rentals = [f"""(1, 21, '{now - datetime.timedelta(hours=3, minutes=37, seconds=48)}', '{now - datetime.timedelta(hours=1, minutes=22, seconds=35)}')""",
             f"""(2, 12, '{now - datetime.timedelta(hours=12, minutes=15, seconds=27)}', NULL)""",
             f"""(3, 7, '{now - datetime.timedelta(hours=27, minutes=42, seconds=52)}', '{now - datetime.timedelta(hours=10, minutes=5, seconds=46)}')""",
@@ -349,7 +366,83 @@ def demodb():
     for rental in rentals:
         c.execute("""INSERT INTO Rentals (customerID, equipmentItemID, rentalStart, rentalEnd) VALUES """ + rental)
 
+
+    #Fill class types
+    classtypes = ["""('Give It A Go', 'A session for beginners to try climbing', 18, NULL, 16, 120, 15.00)""",
+                  """('Technical skills', 'A class to help you improve your climbing skills', 18, NULL, 30, 60, 10.00)""",
+                  """('Competition', '', 12, NULL, NULL, 1440, 5.00)""",
+                  """('11-18 Give It A Go', 'Get your teens climbing with this taster class', 11, 18, 16, 120, 20.00)"""]
+    for classtype in classtypes:
+        c.execute("""INSERT INTO ClassTypes (name, description, lowerAge, upperAge, capacity, length, price) VALUES """ + classtype) 
+
+
+    #Fill classes
+    now = datetime.datetime.now().replace(microsecond = 0, second = 0, minute = 0, hour = 0)#Now datetime object rounded down to today
+    yr = int(now.strftime('%Y'))
+    classes = [f"""(1, NULL, '{now-datetime.timedelta(days = 13, hours = 8)}')""", #4pm 14 days ago
+            f"""(1, NULL, '{now-datetime.timedelta(days = 6, hours = 8,)}')""", #4pm 7 days ago
+            f"""(1, NULL, '{now+datetime.timedelta(days = 0, hours = 16)}')""", #4pm today
+            f"""(1, NULL, '{now+datetime.timedelta(days = 7, hours = 16)}')""", #4pm next week
+            f"""(1, NULL, '{now+datetime.timedelta(days = 14, hours = 16)}')""", #etc
+            f"""(1, NULL, '{now+datetime.timedelta(days = 21, hours = 16)}')""",
+            f"""(1, NULL, '{now+datetime.timedelta(days = 28, hours = 16)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 3, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 10, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 17, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 24, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 31, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 38, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 45, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 52, hours = 18)}')""",
+            f"""(2, NULL, '{now+datetime.timedelta(days = 59, hours = 18)}')""",
+            f"""(4, NULL, '{now-datetime.timedelta(days = 12, hours = 7)}')""",
+            f"""(4, NULL, '{now-datetime.timedelta(days = 5, hours = 7)}')""",
+            f"""(4, NULL, '{now+datetime.timedelta(days = 1, hours = 17)}')""", 
+            f"""(4, NULL, '{now+datetime.timedelta(days = 8, hours = 17)}')""",
+            f"""(4, NULL, '{now+datetime.timedelta(days = 15, hours = 17)}')""",
+            f"""(3, 'Last Christmas Competition', '{now.replace(day=25, month = 12, year = yr-1)}')""",
+            f"""(3, 'This Christmas Competition', '{now.replace(day=25, month = 12, year = yr)}')""",
+            f"""(3, 'Next Christmas Competition', '{now.replace(day=25, month = 12, year = yr+1)}')"""]        
+    for Class in classes:
+        c.execute("""INSERT INTO Classes (classTypeID, customName, dateTime) VALUES """ + Class)
+
+
+    #Fill instructor assignments
+    assignments = ["""(1, 1)""", """(1, 2)""",
+                   """(2, 1)""", """(2, 2)""",
+                   """(3, 1)""", """(3, 2)""",
+                   """(4, 2)""", """(4, 5)""",
+                   """(5, 2)""", """(5, 5)""",
+                   """(6, 2)""", """(6, 5)""",
+                   """(7, 2)""", """(7, 5)"""]
+    for classIDnum in range(8,17):
+        assignments.append("("+str(classIDnum)+", 3)""")
+    for classIDnum in range(17, 22):
+        assignments.append("("+str(classIDnum)+", 2)""")
+        assignments.append("("+str(classIDnum)+", 3)""")
+    for assignment in assignments:
+        c.execute("""INSERT INTO InstructorAssignments (classID, instructorID) VALUES """ + assignment)
+
+
+    #Fill bookings
+    bookings = []
+    for person in [2,4,5,7]:
+        for classId in range(1,8): 
+            bookings.append("(" + str(classId) + ", " + str(person) + ")")
+    for person in [1,9,10]:
+        for classId in range(8,17):
+            bookings.append("(" + str(classId) + ", " + str(person) + ")")
+    for person in [3,6,8]:
+        for classId in range(17,22):
+            bookings.append("(" + str(classId) + ", " + str(person) + ")")
+    for person in [1,2,4,5,6,7,8,9,10]:
+        for classId in range(22,25):
+            bookings.append("(" + str(classId) + ", " + str(person) + ")")
+    for booking in bookings:
+        c.execute("""INSERT INTO Bookings (classID, customerID) VALUES """ + booking)
     
+
+
     conn.commit()
     conn.close()
 
