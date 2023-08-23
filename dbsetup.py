@@ -3,11 +3,16 @@ import os
 import datetime
 
 
+
 def initdb(path="main.db"):
 
-    conn = sqlite3.connect("main.db")
-    c = conn.cursor()
+    pathFile = open('path.txt', mode = 'w')
+    pathFile.write(path)
+    pathFile.close()
 
+    conn = sqlite3.connect(path)
+    c = conn.cursor()
+            
 
     #Create accounts table
     #Check permissions in range 1-3
@@ -15,7 +20,7 @@ def initdb(path="main.db"):
     c.execute("""CREATE TABLE IF NOT EXISTS Accounts (
             accountID INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(50) NOT NULL UNIQUE,
-            password VARCHAR(50) NOT NULL UNIQUE,
+            password VARCHAR(50) NOT NULL,
             permissions INTEGER NOT NULL DEFAULT 1
                             CHECK(permissions >=1)
                             CHECK(permissions <=3)
@@ -35,13 +40,19 @@ def initdb(path="main.db"):
                             CHECK(email LIKE '%_@__%.__%'),
             pay REAL NOT NULL
                             CHECK(pay = ROUND(pay,2)),
-            DBSChecked INTEGER NOT NULL
+            DBSChecked INTEGER NOT NULL DEFAULT 0
                             CHECK(DBSChecked IS 0 OR
                                   DBSChecked IS 1),
 
             FOREIGN KEY (accountID) REFERENCES Accounts(accountID)
             )""")
 
+
+    #create text file to store certification types
+    certs = open('instructorcerts.txt', 'w')
+    certs.write('DBSChecked\n')
+    certs.close()
+    
 
     #Create customer table
     #Same rudimentary email checking as in Instructors table
@@ -232,7 +243,7 @@ def demodb():
     #POTENTIAL OPTION - could simplify and optimise following: rentals
 
     #ALSO RECOGNISED - was this an actual input system it would be very easy for sql injection
-    #Actual system will use proper method using ?s and other brackets
+    #Actual system will use proper method using ?s and other tuples
 
 
     #Fill accounts table with demo data - have to use loop as SQLITE3 does not support adding multiple records in one go
@@ -441,7 +452,6 @@ def demodb():
     for booking in bookings:
         c.execute("""INSERT INTO Bookings (classID, customerID) VALUES """ + booking)
     
-
 
     conn.commit()
     conn.close()
