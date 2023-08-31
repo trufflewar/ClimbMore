@@ -83,6 +83,7 @@ def initdb(path="main.db"):
                                   upperAge IS NULL OR
                                   lowerAge IS NULL),
             capacity INTEGER,
+            noStaff INTEGER,
             length INTEGER
                             CHECK(length <= 1440),
             price REAL
@@ -145,7 +146,10 @@ def initdb(path="main.db"):
             duration INTEGER NOT NULL
                             CHECK(duration <= 365),
             price REAL NOT NULL
-                            CHECK(price = ROUND(price,2))            
+                            CHECK(price = ROUND(price,2)) ,
+            active INTEGER NOT NULL DEFAULT 1
+                            CHECK(active IS 0 OR
+                                  active IS 1)
             )""")
 
 
@@ -379,12 +383,12 @@ def demodb():
 
 
     #Fill class types
-    classtypes = ["""('Give It A Go', 'A session for beginners to try climbing', 18, NULL, 16, 120, 15.00)""",
-                  """('Technical skills', 'A class to help you improve your climbing skills', 18, NULL, 30, 60, 10.00)""",
-                  """('Competition', '', 12, NULL, NULL, 1440, 5.00)""",
-                  """('11-18 Give It A Go', 'Get your teens climbing with this taster class', 11, 18, 16, 120, 20.00)"""]
+    classtypes = ["""('Give It A Go', 'A session for beginners to try climbing', 18, NULL, 16, 2, 120, 15.00)""",
+                  """('Technical skills', 'A class to help you improve your climbing skills', 18, NULL, 1, 30, 60, 10.00)""",
+                  """('Competition', '', 12, NULL, NULL, NULL, 1440, 5.00)""",
+                  """('11-18 Give It A Go', 'Get your teens climbing with this taster class', 11, 18, 16, 2, 120, 20.00)"""]
     for classtype in classtypes:
-        c.execute("""INSERT INTO ClassTypes (name, description, lowerAge, upperAge, capacity, length, price) VALUES """ + classtype) 
+        c.execute("""INSERT INTO ClassTypes (name, description, lowerAge, upperAge, capacity, noStaff, length, price) VALUES """ + classtype) 
 
 
     #Fill classes
