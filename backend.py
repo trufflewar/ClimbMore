@@ -373,9 +373,8 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
 
 #CLASS MANAGEMENT_____________________________________
 
+#Add class type    
+def addClassType(name, description = None, lowerAge = None, upperAge = None, capacity = None, noStaff = None, length = None, price = None):
+    db.executeSQL('INSERT INTO ClassTypes (name, description, lowerAge, upperAge, capacity, noStaff, length, price) VALUES (?,?,?,?,?,?,?,?) ', (name, description, lowerAge, upperAge, capacity, noStaff, length, price))
 
-
-
-
-            
-    
+addClassType("hello")
