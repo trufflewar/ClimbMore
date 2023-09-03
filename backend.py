@@ -1,4 +1,3 @@
-import sqlite3
 import datetime
 import dbaccess as db
 import datetime
@@ -41,7 +40,7 @@ def addNewCustomer(username, password, fname, sname, email, DOB):
     hashed = ph.hash(password)
     
     #Create account record, get respective accountID, and create corresponding custmer entry
-    db.executeSQL('INSERT INTO Accounts (username, hash, permissions) VALUES (?, ?, 1) ', (username, hahsed))
+    db.executeSQL('INSERT INTO Accounts (username, hash, permissions) VALUES (?, ?, 1) ', (username, hashed))
     accountID = db.executeSQL('SELECT accountID FROM Accounts WHERE username = ?', (username,))[0][0]
     db.executeSQL('INSERT INTO Customers (accountID, fname, sname, email, DOB) VALUES (?, ?, ?, ?, ?)', (accountID, fname, sname, email, DOB))
 
