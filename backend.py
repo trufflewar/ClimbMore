@@ -2,6 +2,9 @@ import sqlite3
 import datetime
 import dbaccess as db
 import datetime
+from argon2 import PasswordHasher
+
+ph = PasswordHasher()
 
 
 #ACCOUNT, CUSTOMER, INSTRUCTOR MANAGEMENT_________________________________
@@ -14,8 +17,10 @@ def addNewStaff(username, password, name, email, pay, certs = [], admin = False)
     else:
         admin = 2
 
+    hashed = ph.hash(password)
+
     #Create account record, get respective accountID, and create corresponding instructor entry
-    db.executeSQL('INSERT INTO Accounts (username, password, permissions) VALUES (?, ?, ?) ', (username, password, admin))
+    db.executeSQL('INSERT INTO Accounts (username, hash, permissions) VALUES (?, ?, ?) ', (username, hashed, admin))
     accountID = db.executeSQL('SELECT accountID FROM Accounts WHERE username = ?', (username,))[0][0]
     db.executeSQL('INSERT INTO Instructors (accountID, name, email, pay) VALUES (?, ?, ?, ?)', (accountID, name, email, pay))
 
@@ -24,7 +29,7 @@ def addNewStaff(username, password, name, email, pay, certs = [], admin = False)
     certList = certsFile.split('\n')
     certList.remove('')
     
-    #Changes all specified certification columns to 1
+    #Changes all specified certification columns to 1 (equivalent of True)
     for cert in certs:
         if cert in certList:
             db.executeSQL(f'UPDATE Instructors SET {cert} = 1 WHERE accountID = ?', (accountID,))
@@ -32,9 +37,11 @@ def addNewStaff(username, password, name, email, pay, certs = [], admin = False)
 
 #add new customer
 def addNewCustomer(username, password, fname, sname, email, DOB):
+
+    hashed = ph.hash(password)
     
     #Create account record, get respective accountID, and create corresponding custmer entry
-    db.executeSQL('INSERT INTO Accounts (username, password, permissions) VALUES (?, ?, 1) ', (username, password))
+    db.executeSQL('INSERT INTO Accounts (username, hash, permissions) VALUES (?, ?, 1) ', (username, hahsed))
     accountID = db.executeSQL('SELECT accountID FROM Accounts WHERE username = ?', (username,))[0][0]
     db.executeSQL('INSERT INTO Customers (accountID, fname, sname, email, DOB) VALUES (?, ?, ?, ?, ?)', (accountID, fname, sname, email, DOB))
 
@@ -42,7 +49,7 @@ def addNewCustomer(username, password, fname, sname, email, DOB):
 #login
 def login(username, password):
     #get corresponding pwd and ID if exist
-    details = db.executeSQL('SELECT accountID, password, permissions FROM Accounts WHERE username = ?', (username,))
+    details = db.executeSQL('SELECT accountID, hash, permissions FROM Accounts WHERE username = ?', (username,))
 
     #check username exists
     if len(details)==1:
@@ -51,7 +58,7 @@ def login(username, password):
          return 'WrongUsername'
 
     #check password
-    if details[1] == password:
+    if ph.verify(details[1], password) == True:
         return 'LoggedIn' + str(details[0])
     else:
         return 'WrongPassword'
@@ -59,11 +66,15 @@ def login(username, password):
 
 #change account password
 def changePassword(username, oldPassword, newPassword):
+    #check old password correct
     loginCheck = login(username, oldPassword)
     if loginCheck[:8]=='LoggedIn':
-        db.executeSQL('UPDATE Accounts SET password = ? WHERE accountID = ?', (newPassword, int(loginCheck[8:])))
+        #change password
+        hashed = ph.hash(newPassword)
+        db.executeSQL('UPDATE Accounts SET hash = ? WHERE accountID = ?', (hashed, int(loginCheck[8:])))
         return 'ChangedPassword'
     else:
+        #return if failed
         return loginCheck
 
 
@@ -72,17 +83,21 @@ def getInstructor(accountID = None, instructorID = None, name = None, email = No
     searchParams = locals() #this is a very messy way of doing it :/
     del searchParams['certs']
 
+    #add specified certificatopm to search parameters
     for cert in certs:
         searchParams[cert] = 1
-    
+
+    #setup comand
     command = 'SELECT * FROM Instructors WHERE '
     values = []
 
+    #configue and add tp commadn
     for parameter in searchParams: #MORE messy!
         if searchParams[parameter] != None:
             command = command + parameter + ' = ? AND '
             values.append(searchParams[parameter])
 
+    #clean up and execute command
     command = command[:(len(command)-4)]
     results = db.executeSQL(command, tuple(values))
     return results
@@ -91,14 +106,17 @@ def getInstructor(accountID = None, instructorID = None, name = None, email = No
 def getCustomer(accountID = None, customerID = None, fname = None, sname = None, email = None, DOB = None):
     searchParams = locals()
 
+    #setup command
     command = 'SELECT * FROM Customers WHERE '
     values = []
 
+    #add search terms
     for parameter in searchParams: #MORE messy!
         if searchParams[parameter] != None:
             command = command + parameter + ' = ? AND '
             values.append(searchParams[parameter])
 
+    #clean up and ecxecute
     command = command[:(len(command)-4)]
     #print(command)
     results = db.executeSQL(command, tuple(values))
@@ -112,11 +130,13 @@ def getPermissions(accountID):
 
 #check whether a customer is an adult or child
 def checkAdult(customerID):
+    #get DOB from rel acc id
     DOB = db.executeSQL('SELECT DOB FROM Customers WHERE customerID = ?', (customerID,))[0][0]
+    #put into datetime form, get today date, decreas by 18 years and check
     DOB = datetime.datetime.strptime(DOB, '%Y-%m-%d')
     today = datetime.datetime.now().replace(microsecond = 0, second = 0, minute = 0, hour = 0)
     year = int(today.strftime('%Y'))
-    eighteenAgo = today.replace(year = (year-18))
+    eighteenAgo = today.replace(year = (year-18)) #FIX THIS - may well cause freakout if today is feb 29th
     if eighteenAgo>=DOB:
         return True
     else:
@@ -162,7 +182,7 @@ def editInstructor(instructorID, name = None, email = None, pay = None, certs = 
 def editCustomer(customerID, fname = None, sname = None, email = None, DOB = None):
     editParams = locals()
     del editParams['customerID']
-
+    
     command = 'UPDATE Customers SET '
     values = []
 
@@ -211,14 +231,17 @@ def getMemberships(membershipID = None, name = None, noAdults = None, noKids = N
     searchParams = locals()
     del searchParams['name']
 
+    #setup command
     command = 'SELECT * FROM Memberships WHERE '
     values = []
 
+    #add params
     for parameter in searchParams:
         if searchParams[parameter] != None:
             command = command + parameter + ' = ? AND '
             values.append(searchParams[parameter])
-    
+
+    #cleanup command
     command = command[:(len(command)-4)]
 
     #separate code for name as it does not require full name, just part
@@ -252,13 +275,16 @@ def buyMembership(membershipID, adult1 = None, adult2 = None, kid1 = None, kid2 
 
     del members['membershipID']
 
+    #check is membership is available
     if db.executeSQL('SELECT active FROM Memberships WHERE membershipID = ?',(membershipID,))==0:
         return 'DiscontinuedMembership'
 
+    #setup command
     command = 'INSERT INTO MembershipRecords (membershipID, startDate, '
     values = [membershipID, today.strftime('%Y-%m-%d')]
     count = 2
 
+    #add params
     for member in members:
         if members[member] != None:
             if ('adult' in member and checkAdult(members[member]) == True) or ('kid' in member and checkAdult(members[member]) == False):
@@ -268,6 +294,7 @@ def buyMembership(membershipID, adult1 = None, adult2 = None, kid1 = None, kid2 
             else:
                 return 'AgeMismatch'
 
+    #cleanup, configure and add ? tuple, execute
     command = command[:(len(command)-2)]
     command = command + ') VALUES (' + ' '.join(['?,' for x in range(count)])
     command = command[:(len(command)-1)] + ')'
@@ -276,13 +303,16 @@ def buyMembership(membershipID, adult1 = None, adult2 = None, kid1 = None, kid2 
 
 #check active membership
 def checkMember(membershipID):
+    #get all memberships purchased
     records = db.executeSQL('SELECT membershipID, startDate FROM MembershipRecords WHERE (adult1 = ? OR adult2 = ? OR kid1 = ? OR kid2 = ? OR kid3 = ? OR kid4 = ?)', (membershipID, membershipID, membershipID, membershipID, membershipID, membershipID))
     today = datetime.datetime.now().replace(microsecond = 0, second = 0, minute = 0, hour = 0)
-    
+
+    #setup 
     for record in records:
         length = db.executeSQL('SELECT duration FROM Memberships WHERE membershipID = ?', (record[0],))
         length = length[0][0]
 
+        #check for active memberships
         startDate = datetime.datetime.strptime(record[1], '%Y-%m-%d')
         endDate = startDate + datetime.timedelta(days = length)
         if endDate > today:
@@ -299,17 +329,21 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
     searchParams = locals()
     del searchParams['ACTIVE']
 
+    #setup command
     command = 'SELECT * FROM MembershipRecords WHERE '
     values = []
 
+    #add params
     for parameter in searchParams:
         if searchParams[parameter] != None:
             command = command + parameter + ' = ? AND '
             values.append(searchParams[parameter])
-    
+
+    #cleanup and execute
     command = command[:(len(command)-4)]
     results = db.executeSQL(command, tuple(values))
 
+    #run check for active membershup if required
     if ACTIVE == None:
         return results
 
@@ -336,7 +370,13 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
         raise TypeError('ACTIVE flag should be Bool or None')
 
 
-def 
+
+
+#CLASS MANAGEMENT_____________________________________
+
+
+
+
 
             
     
