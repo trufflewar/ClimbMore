@@ -1,7 +1,9 @@
 import sqlite3
 import os
 import datetime
+from argon2 import PasswordHasher
 
+ph = PasswordHasher()
 
 
 def initdb(path="main.db"):
@@ -20,7 +22,7 @@ def initdb(path="main.db"):
     c.execute("""CREATE TABLE IF NOT EXISTS Accounts (
             accountID INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(50) NOT NULL UNIQUE,
-            password VARCHAR(50) NOT NULL,
+            hash VARCHAR(97) NOT NULL,
             permissions INTEGER NOT NULL DEFAULT 1
                             CHECK(permissions >=1)
                             CHECK(permissions <=3)
@@ -251,23 +253,25 @@ def demodb():
 
 
     #Fill accounts table with demo data - have to use loop as SQLITE3 does not support adding multiple records in one go
-    accounts = ["""('Thercull', 'Joophong3', 1)""",
-                """('Yousiolind03', 'Uu7aiPhoovo', 1)""",
-                """('Stilad', 'ou9ith9Eid', 1)""",
-                """('Agrot1995', 'dooP1Looju', 1)""",
-                """('Trugh1954', 'ienooZ1zo2ie', 1)""",
-                """('Shime1983', 'ha3Nah2thah', 1)""",
-                """('Lethemstes', 'ohwee2Du8ie', 1)""",
-                """('Apocran', 'Doh9ootavoo', 1)""",
-                """('Witicher', 'Vie8eechae', 1)""",
-                """('Wastrid97', 'Aj7ahb6siet', 1)""",
-                """('Illy1973', 'rai4edoVae', 2)""",
-                """('Ladmis', 'oorasaBu4J', 2)""",
-                """('Givell', 'Kahnoh8oh', 2)""",
-                """('Evere1969', 'aiv7iSeeMae', 2)""",
-                """('Dificen', 'koxah9Ci', 3)"""]
+    accounts = [('Thercull', 'Joophong3', 1),
+                ('Yousiolind03', 'Uu7aiPhoovo', 1),
+                ('Stilad', 'ou9ith9Eid', 1),
+                ('Agrot1995', 'dooP1Looju', 1),
+                ('Trugh1954', 'ienooZ1zo2ie', 1),
+                ('Shime1983', 'ha3Nah2thah', 1),
+                ('Lethemstes', 'ohwee2Du8ie', 1),
+                ('Apocran', 'Doh9ootavoo', 1),
+                ('Witicher', 'Vie8eechae', 1),
+                ('Wastrid97', 'Aj7ahb6siet', 1),
+                ('Illy1973', 'rai4edoVae', 2),
+                ('Ladmis', 'oorasaBu4J', 2),
+                ('Givell', 'Kahnoh8oh', 2),
+                ('Evere1969', 'aiv7iSeeMae', 2),
+                ('Dificen', 'koxah9Ci', 3)]
+    #hash passwords and append to table
     for account in accounts:
-        c.execute("""INSERT INTO Accounts (username, password, permissions) VALUES """ + account)
+        accountWHash = (account[0], ph.hash(account[1]), account[2])
+        c.execute("""INSERT INTO Accounts (username, hash, permissions) VALUES (?,?,?)""", accountWHash)
                 
 
     #Fill customers table with demo data
