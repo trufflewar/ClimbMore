@@ -198,12 +198,12 @@ def editCustomer(customerID, fname = None, sname = None, email = None, DOB = Non
     db.executeSQL(command, tuple(values))
 
 
-#The following remove subroutines will be expaned to also delete respective bookings, rentals, assignments etc
+#The following remove subroutines will be expaned to also delete respective bookings, rentals, assignments etc TODO
 def removeInstructor(instructorID):
     accountID = db.executeSQL('SELECT accountID FROM Instructors WHERE instructorID = ?', (instructorID,))[0][0]
     db.executeSQL('DELETE FROM Instructors WHERE instructorID = ?', (instructorID,))
     db.executeSQL('DELETE FROM Accounts WHERE accountID = ?', (accountID,))
-    
+ 
 def removeCustomer(customerID):
     accountID = db.executeSQL('SELECT accountID FROM Customers WHERE customerID = ?', (customerID,))[0][0]
     db.executeSQL('DELETE FROM Customers WHERE customerID = ?', (customerID,))
@@ -377,4 +377,44 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
 def addClassType(name, description = None, lowerAge = None, upperAge = None, capacity = None, noStaff = None, length = None, price = None):
     db.executeSQL('INSERT INTO ClassTypes (name, description, lowerAge, upperAge, capacity, noStaff, length, price) VALUES (?,?,?,?,?,?,?,?) ', (name, description, lowerAge, upperAge, capacity, noStaff, length, price))
 
-addClassType("hello")
+
+#search class times
+def getClassType(name = None, lowerAge = None, upperAge = None, capacity = None, noStaff = None, length = None, price = None):
+    searchParams = locals()
+    del searchParams['name']
+
+    #setup command
+    command = 'SELECT * FROM ClassTypes WHERE '
+    values = []
+
+    #add params
+    for parameter in searchParams:
+        if searchParams[parameter] != None:
+            command = command + parameter + ' = ? AND '
+            values.append(searchParams[parameter])
+
+    #cleanup command
+    if len(values) != 0:
+        command = command[:(len(command)-4)]
+
+    #separate code for name as it does not require full name, just part
+    if name != None:
+        if len(values)==0:
+            command = command + ' name LIKE ?'
+        else:
+            command = command + ' AND name LIKE ?'
+        values.append('%' + name + '%')
+
+    print(command)
+    results = db.executeSQL(command, tuple(values))
+    return results
+
+
+#delete a class type and convert to another
+def removeClassType(classTypeID):
+    #TODO once make removeClass, getClass methods
+    pass
+
+#Don't know if there should ba an editClassType - may cause significant problems regarding capacity, staffing etc
+
+

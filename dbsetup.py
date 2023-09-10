@@ -388,7 +388,7 @@ def demodb():
 
     #Fill class types
     classtypes = ["""('Give It A Go', 'A session for beginners to try climbing', 18, NULL, 16, 2, 120, 15.00)""",
-                  """('Technical skills', 'A class to help you improve your climbing skills', 18, NULL, 1, 30, 60, 10.00)""",
+                  """('Technical skills', 'A class to help you improve your climbing skills', 18, NULL, 30, 1, 60, 10.00)""",
                   """('Competition', '', 12, NULL, NULL, NULL, 1440, 5.00)""",
                   """('11-18 Give It A Go', 'Get your teens climbing with this taster class', 11, 18, 16, 2, 120, 20.00)"""]
     for classtype in classtypes:
