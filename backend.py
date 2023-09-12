@@ -198,7 +198,7 @@ def editCustomer(customerID, fname = None, sname = None, email = None, DOB = Non
     db.executeSQL(command, tuple(values))
 
 
-# TODO The following remove subroutines will be expaned to also delete respective bookings, rentals, assignments etc 
+# TODO 'remove'  subroutines will be expaned to also delete respective bookings, rentals, assignments etc 
 def removeInstructor(instructorID):
     accountID = db.executeSQL('SELECT accountID FROM Instructors WHERE instructorID = ?', (instructorID,))[0][0]
     db.executeSQL('DELETE FROM Instructors WHERE instructorID = ?', (instructorID,))
@@ -444,8 +444,10 @@ def addClass(classTypeID, dateTime, customName = None, instructors = []):
     if len(instructorSet) < len(instructors):
         return "Duplicate Instructors Found"
     
+    #get classID
     classID = db.executeSQL("INSERT INTO Classes (classTypeID, dateTime, customName) VALUES (?, ?, ?)", (classTypeID, str(dateTime), customName), returnCursor=True)
 
+    #add respective isntructor assignments
     for instructor in instructors:
         db.executeSQL("INSERT INTO InstructorAssignments (classID, instructorID) VALUES (?,?)", (classID, instructor))
 
@@ -514,9 +516,11 @@ def addBooking(classID, customerID):
 #search bookings
 def getBookings(classID = None, customerID = None):
     
+    #setup command
     command = 'SELECT * FROM Bookings WHERE '
     values = []
 
+    #add arguments
     if classID != None:
         command = command + 'classID = ? AND '
         values.append(classID)
@@ -524,11 +528,13 @@ def getBookings(classID = None, customerID = None):
         command = command + 'customerID = ? AND '
         values.append(customerID)
 
+    #cleanup
     if len(values)==0:
         command = command[:len(command)-6]
     else:
         command = command[:len(command)-4]
 
+    #get and return results
     results = db.executeSQL(command, tuple(values))
     return results
 
@@ -537,4 +543,42 @@ def getBookings(classID = None, customerID = None):
 def removeBooking(bookingID):
     db.executeSQL('DELETE FROM Bookings WHERE bookingID = ?', (bookingID,))
     #TODO add email to customer to inform them
+
+
+#get instructorAssignment
+def getAssignment(classID = None, instructorID = None):
+
+    #setup command
+    command = 'SELECT * FROM InstructorAssignments WHERE '
+    values = []
+
+    #add arguments
+    if classID != None:
+        command = command + 'classID = ? AND '
+        values.append(classID)
+    if instructorID != None:
+        command = command + 'instructorID = ? AND '
+        values.append(instructorID)
+
+    #cleanup
+    if len(values)==0:
+        command = command[:len(command)-6]
+    else:
+        command = command[:len(command)-4]
+
+    #return results
+    results = db.executeSQL(command, tuple(values))
+    return results
+
+
+#change instructors
+def changeInstructor(classID, prevInstructor, newInstructor):
+    #check if old instructor actually booked
+    assignment = db.executeSQL('SELECT allocationID FROM InstructorAssignments WHERE classID = ? and instructorID = ?', (classID, prevInstructor))
+    if len(assignment)==0:
+        return "AssignmentDoesNotExist"
+    
+    #Update assignment
+    db.executeSQL('UPDATE InstructorAssignments SET instructorID = ? WHERE allocationID = ?', (newInstructor, assignment[0][0]))
+    #TODO Send email to instructor??
 
