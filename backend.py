@@ -198,7 +198,7 @@ def editCustomer(customerID, fname = None, sname = None, email = None, DOB = Non
     db.executeSQL(command, tuple(values))
 
 
-#The following remove subroutines will be expaned to also delete respective bookings, rentals, assignments etc TODO
+# TODO The following remove subroutines will be expaned to also delete respective bookings, rentals, assignments etc 
 def removeInstructor(instructorID):
     accountID = db.executeSQL('SELECT accountID FROM Instructors WHERE instructorID = ?', (instructorID,))[0][0]
     db.executeSQL('DELETE FROM Instructors WHERE instructorID = ?', (instructorID,))
@@ -369,6 +369,8 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
         raise TypeError('ACTIVE flag should be Bool or None')
 
 
+#TODO need to ensure that all get methods have a catch to remove the WHERE clause if no conditions are included
+#see end of getClass for example
 
 
 #CLASS MANAGEMENT_____________________________________
@@ -412,9 +414,127 @@ def getClassType(name = None, lowerAge = None, upperAge = None, capacity = None,
 
 #delete a class type and convert to another
 def removeClassType(classTypeID):
-    #TODO once make removeClass, getClass methods
+    # TODO: once make removeClass, getClass methods
     pass
 
 #Don't know if there should ba an editClassType - may cause significant problems regarding capacity, staffing etc
 
+
+#addClass instance
+def addClass(classTypeID, dateTime, customName = None, instructors = []):
+    if type(dateTime) is not datetime.datetime:
+        return "Not Datetime Object"
+
+    dateTime = dateTime.replace(microsecond = 0)
+
+    #get number of staff need for class
+    noStaff = (db.executeSQL('SELECT noStaff FROM ClassTypes WHERE classTypeID = ?', (classTypeID,)))[0][0]
+
+    #check there is the correct number of instructors
+    if len(instructors)!=noStaff:
+        return "Instructor number mismatch"
+    
+    #check all instructors exist
+    for instructor in instructors:
+        if len(db.executeSQL('SELECT * FROM Instructors WHERE instructorID = ?', (instructor,))) != 1:
+            return "Instructor " + instructor + " does not exist"
+
+    #check for duplicates    
+    instructorSet = set(instructors)
+    if len(instructorSet) < len(instructors):
+        return "Duplicate Instructors Found"
+    
+    classID = db.executeSQL("INSERT INTO Classes (classTypeID, dateTime, customName) VALUES (?, ?, ?)", (classTypeID, str(dateTime), customName), returnCursor=True)
+
+    for instructor in instructors:
+        db.executeSQL("INSERT INTO InstructorAssignments (classID, instructorID) VALUES (?,?)", (classID, instructor))
+
+
+#search classes
+def getClass(classID = None, classTypeID = None, customName = None, date = None):
+    
+    #setup command
+    command = 'SELECT * FROM Classes WHERE '
+    values  = []
+
+    #add conditions for classID and classtypeID
+    if classID != None:
+        command = command + 'classID = ? AND '
+        values.append(classID)
+    if classTypeID != None:
+        command = command + 'classTypeID = ? AND '
+        values.append(classTypeID)
+    
+    #add date condition
+    if date != None:
+        if type(date) != datetime.date:
+            return "Need datetime.date object"
+        else:
+            command = command + 'dateTime LIKE ? AND '
+            values.append(str(date) + '%')
+
+    #add condition for name
+    if customName != None:
+        command = command + ' customName LIKE ?'
+        values.append('%' + customName + '%')
+    elif len(values)!=0:
+        command = command[:len(command)-4]
+    else:
+        command = command[:len(command)-6]
+
+    print(command)
+
+    results = db.executeSQL(command, tuple(values))
+    return results
+
+
+#remove/cancel a class
+def deleteClass(classID):
+    #TODO, delete instructor assignments, bookings, send email
+    db.executeSQL('DELETE FROM Classes WHERE classID = ?', (classID,))
+
+
+#change a class time
+def changeClassTime(classID, dateTime):
+    #add date condition
+    if type(dateTime) != datetime.datetime:
+        return "Need datetime.date object"
+    else:
+        dateTime.replace(microseconds = 0)
+        db.executeSQL('UPDATE Classes SET dateTime = ? WHERE classID = ?', (dateTime, classID))
+    #TODO add email to inform customers
+
+
+#add a booking
+def addBooking(classID, customerID):
+    #TODO add catching for overbooking and duplicate bookings
+    db.executeSQL('INSERT INTO Bookings (classID, customerID) VALUES (?,?)', (classID, customerID))
+
+
+#search bookings
+def getBookings(classID = None, customerID = None):
+    
+    command = 'SELECT * FROM Bookings WHERE '
+    values = []
+
+    if classID != None:
+        command = command + 'classID = ? AND '
+        values.append(classID)
+    if customerID != None:
+        command = command + 'customerID = ? AND '
+        values.append(customerID)
+
+    if len(values)==0:
+        command = command[:len(command)-6]
+    else:
+        command = command[:len(command)-4]
+
+    results = db.executeSQL(command, tuple(values))
+    return results
+
+
+#remove class booking
+def removeBooking(bookingID):
+    db.executeSQL('DELETE FROM Bookings WHERE bookingID = ?', (bookingID,))
+    #TODO add email to customer to inform them
 

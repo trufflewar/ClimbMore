@@ -5,17 +5,21 @@ import sqlite3
 
 def getPath():
     pathFile = open('path.txt', 'r')
-    return pathFile.read()
+    read = pathFile.read()
     pathFile.close()
+    return read
     
 
-def executeSQL(command, valueTuple = ()):
+def executeSQL(command, valueTuple = (), returnCursor = False):
 
     conn = sqlite3.connect(getPath())
     c = conn.cursor()
 
     c.execute(command, valueTuple)
     dboutput = c.fetchall()
+
+    if returnCursor==True and not dboutput:
+        dboutput = c.lastrowid
 
     conn.commit()
     conn.close()
