@@ -1,7 +1,7 @@
 import sqlite3
 
 # this file is used to remove requiremtnt for conn configuration etc in backend.py
-
+#TODO potential error chekcing for missing file in getPath()
 
 def getPath():
     pathFile = open('path.txt', 'r')
