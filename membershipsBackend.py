@@ -103,23 +103,33 @@ def checkMember(membershipID):
 
 #search membership records
 #Should prob fix this as only searches specific fields but should really check if customerId in any fields
-def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, startDate = None, adult1 = None, adult2 = None, kid1 = None, kid2 = None, kid3 = None, kid4 = None):
+def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, startDate = None, customerID = None):
     searchParams = locals()
     del searchParams['ACTIVE']
+    del searchParams['customerID']
 
-    #setup command
-    command = 'SELECT * FROM MembershipRecords WHERE '
-    values = []
+    results = []
 
-    #add params
-    for parameter in searchParams:
-        if searchParams[parameter] != None:
-            command = command + parameter + ' = ? AND '
-            values.append(searchParams[parameter])
+    for field in ['adult1', 'adult2', 'kid1', 'kid2', 'kid3', 'kid4']:
+        #setup command
+        if customerID != None:  
+            command = 'SELECT * FROM MembershipRecords WHERE ' + field + ' = ? AND '
+            values = [customerID]
 
-    #cleanup and execute
-    command = command[:(len(command)-4)]
-    results = db.executeSQL(command, tuple(values))
+        else:
+            command = 'SELECT * FROM MembershipRecords WHERE '
+            values = []
+
+        #add params
+        for parameter in searchParams:
+            if searchParams[parameter] != None:
+                command = command + parameter + ' = ? AND '
+                values.append(searchParams[parameter])
+
+        #cleanup and execute
+        command = command[:(len(command)-4)]
+        results.extend(db.executeSQL(command, tuple(values)))
+
 
     #run check for active membershup if required
     if ACTIVE == None:
@@ -142,11 +152,14 @@ def getMembershipRecord(ACTIVE = None, purchaseID = None, membershipID = None, s
             if endDate < today:
                 results.remove(result)
 
-        print(results)
+        #(results)
                    
     else:
         raise TypeError('ACTIVE flag should be Bool or None')
+    
+    return results
 
 
-#TODO need to ensure that all get methods have a catch to remove the WHERE clause if no conditions are included
+
+#TODO need to ensure that all get methods have a catch to remove the WHERE clause if no conditions are included - DONT THINK THIS IS Actually a problem lol
 #see end of getClass for example

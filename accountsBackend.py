@@ -2,6 +2,7 @@ import datetime
 import dbaccess as db
 import datetime
 from argon2 import PasswordHasher
+import re
 
 ph = PasswordHasher()
 
@@ -58,7 +59,7 @@ def login(username, password):
 
     #check password
     if ph.verify(details[1], password) == True:
-        return 'LoggedIn' + str(details[0])
+        return 'LoggedIn'+str(details[0])
     else:
         return 'WrongPassword'
     
@@ -76,6 +77,10 @@ def changePassword(username, oldPassword, newPassword):
         #return if failed
         return loginCheck
 
+def adminChangePassword(accountID, password):
+    hashed = ph.hash(password)
+    db.executeSQL('UPDATE Accounts SET hash = ? WHERE accountID = ?', (hashed, accountID))
+    return 'ChangedPassword'
 
 #search for an instructor
 def getInstructor(accountID = None, instructorID = None, name = None, email = None, pay = None, certs = None):
@@ -135,7 +140,7 @@ def checkAdult(customerID):
     DOB = datetime.datetime.strptime(DOB, '%Y-%m-%d')
     today = datetime.datetime.now().replace(microsecond = 0, second = 0, minute = 0, hour = 0)
     year = int(today.strftime('%Y'))
-    eighteenAgo = today.replace(year = (year-18)) #FIX THIS - may well cause freakout if today is feb 29th
+    eighteenAgo = today.replace(year = (year-18)) #FIX THIS - may well cause logic error if today is feb 29th
     if eighteenAgo>=DOB:
         return True
     else:
@@ -210,8 +215,8 @@ def removeCustomer(customerID):
     db.executeSQL('DELETE FROM Accounts WHERE accountID = ?', (accountID,))
 
 
-#add cterification column in instructors - BIG FLAW HERE - this i vunerable to SQL injection and
-#needs some code to sanitise inputs    
+#add cterification column in instructors - TODO BIG FLAW HERE - this i vunerable to SQL injection and
+#needs some code to sanitise inputs BUT is only accessible to admins... 
 def addCertType(certName, default = False):
     if default==True:
         default = 1
@@ -219,8 +224,17 @@ def addCertType(certName, default = False):
         default = 0
 
     db.executeSQL(f'''ALTER TABLE Instructors ADD COLUMN {certName} INTEGER NOT NULL DEFAULT {default}
-                    CHECK({certName} IS 0 OR {certName} IS 1)''')
+                    CHECK({certName} IS 0 OR {certName} IS 1)''') #used f strig for this as easier to insert names
 
 
 
+#uses a regex pattern to fully validate all emails input
+def verifyEmail(email):
+    return re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)
+#TODO have this send email to check verification
 
+def getUsername(accountID):
+    try:
+        return db.executeSQL('SELECT username FROM Accounts WHERE accountID = ?', (accountID,))[0][0]
+    except IndexError:
+        return('Invalid Account ID')
