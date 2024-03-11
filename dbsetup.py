@@ -253,7 +253,7 @@ def demodb():
 
 
     #Fill accounts table with demo data - have to use loop as SQLITE3 does not support adding multiple records in one go
-    accounts = [('Thercull', 'Joophong3', 1),
+    accounts = [('Customer', 'Customer', 1),
                 ('Yousiolind03', 'Uu7aiPhoovo', 1),
                 ('Stilad', 'ou9ith9Eid', 1),
                 ('Agrot1995', 'dooP1Looju', 1),
@@ -267,7 +267,7 @@ def demodb():
                 ('Ladmis', 'oorasaBu4J', 2),
                 ('Givell', 'Kahnoh8oh', 2),
                 ('Evere1969', 'aiv7iSeeMae', 2),
-                ('Dificen', 'koxah9Ci', 3)]
+                ('Admin', 'Admin', 3)]
     #hash passwords and append to table
     for account in accounts:
         accountWHash = (account[0], ph.hash(account[1]), account[2])

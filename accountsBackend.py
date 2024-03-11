@@ -88,8 +88,9 @@ def getInstructor(accountID = None, instructorID = None, name = None, email = No
     del searchParams['certs']
 
     #add specified certificatopm to search parameters
-    for cert in certs:
-        searchParams[cert] = 1
+    if certs != None:
+        for cert in certs:
+            searchParams[cert] = 1
 
     #setup comand
     command = 'SELECT * FROM Instructors WHERE '
@@ -230,7 +231,7 @@ def addCertType(certName, default = False):
 
 #uses a regex pattern to fully validate all emails input
 def verifyEmail(email):
-    return re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)
+    return bool(re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email))
 #TODO have this send email to check verification
 
 def getUsername(accountID):
@@ -238,3 +239,10 @@ def getUsername(accountID):
         return db.executeSQL('SELECT username FROM Accounts WHERE accountID = ?', (accountID,))[0][0]
     except IndexError:
         return('Invalid Account ID')
+    
+
+def checkGoodUsername(username):
+    if len(db.executeSQL('SELECT username FROM Accounts WHERE username = ?', (username,))) == 0 and len(username) >= 8:
+        return True
+    else:
+        return False

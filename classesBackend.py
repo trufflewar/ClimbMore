@@ -10,7 +10,7 @@ def addClassType(name, description = None, lowerAge = None, upperAge = None, cap
 
 
 #search class times
-def getClassType(name = None, lowerAge = None, upperAge = None, capacity = None, noStaff = None, length = None, price = None):
+def getClassType(classTypeID = None, name = None, lowerAge = None, upperAge = None, capacity = None, noStaff = None, length = None, price = None):
     searchParams = locals()
     del searchParams['name']
 
@@ -27,16 +27,16 @@ def getClassType(name = None, lowerAge = None, upperAge = None, capacity = None,
     #cleanup command
     if len(values) != 0:
         command = command[:(len(command)-4)]
-
-    #separate code for name as it does not require full name, just part
-    if name != None:
+    elif name != None:
         if len(values)==0:
             command = command + ' name LIKE ?'
         else:
             command = command + ' AND name LIKE ?'
         values.append('%' + name + '%')
+    else:
+        command = command[:len(command)-6]
 
-    print(command)
+    #print(command)
     results = db.executeSQL(command, tuple(values))
     return results
 
@@ -81,6 +81,17 @@ def addClass(classTypeID, dateTime, customName = None, instructors = []):
         db.executeSQL("INSERT INTO InstructorAssignments (classID, instructorID) VALUES (?,?)", (classID, instructor))
 
 
+
+def addClassNoInstuctors(classTypeID, dateTime, customName = None):
+    
+    #get classID
+    classID = db.executeSQL("INSERT INTO Classes (classTypeID, dateTime, customName) VALUES (?, ?, ?)", (classTypeID, str(dateTime), customName), returnCursor=True)
+    return classID
+
+
+
+
+
 #search classes
 def getClass(classID = None, classTypeID = None, customName = None, date = None):
     
@@ -113,7 +124,7 @@ def getClass(classID = None, classTypeID = None, customName = None, date = None)
     else:
         command = command[:len(command)-6]
 
-    print(command)
+    #print(command)
 
     results = db.executeSQL(command, tuple(values))
     return results
@@ -141,6 +152,9 @@ def addBooking(classID, customerID):
     #TODO add catching for overbooking and duplicate bookings
     db.executeSQL('INSERT INTO Bookings (classID, customerID) VALUES (?,?)', (classID, customerID))
 
+
+def addAssignment(classID, instructorID):
+    db.executeSQL('INSERT INTO InstructorAssignments (classID, instructorID) VALUES (?,?)', (classID, instructorID))
 
 #search bookings
 def getBookings(classID = None, customerID = None):
@@ -209,5 +223,5 @@ def changeInstructor(classID, prevInstructor, newInstructor):
     
     #Update assignment
     db.executeSQL('UPDATE InstructorAssignments SET instructorID = ? WHERE allocationID = ?', (newInstructor, assignment[0][0]))
-    #TODO Send email to instructor??
+    #TODO Send email to instructor??sw
 
