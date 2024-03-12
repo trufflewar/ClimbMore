@@ -53,6 +53,7 @@ def changeEmail(customerID, staff):
         if emailBox.get() == confirmBox.get():
             if backend.verifyEmail(email=emailBox.get()):
                 backend.editCustomer(customerID=customerID, email=emailBox.get())
+                #print('yay')
                 messagebox.showinfo("Success", "Email changed successfully!")
                 popUp.destroy()
                 popUp.update()
@@ -430,13 +431,14 @@ def viewCustomers(Master, customerList, search, accountID):
     shell.grid_columnconfigure(0, weight=2)
     shell.grid_columnconfigure(1, weight = 1)
 
+
     titleLabel = tk.Label(master = shell, text = title, font=("Arial Bold", 20))
     titleLabel.grid(row = 0, column = 0, columnspan = 2, sticky = 'W', padx = 10, pady = 5)
 
     options = [customer[3]+', '+customer[2] for customer in customerList]
     optionsVar = tk.StringVar(value = options)
     customerListbox = tk.Listbox(master=shell, listvariable=optionsVar, selectmode='single')
-    customerListbox.grid(row = 1, rowspan=3, column = 0, padx = 10, pady = 10)
+    customerListbox.grid(row = 1, rowspan=3, column = 0, padx = 10, pady = 10, sticky = 'NSEW')
 
     addButton = tk.Button(master = shell, text = "Add Customer", command = lambda: addCustomer(Master = Master, accountID=accountID))
     addButton.grid(row = 1, column = 1)

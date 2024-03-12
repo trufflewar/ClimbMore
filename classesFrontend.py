@@ -686,7 +686,10 @@ def classesMenu(Master, accountID):
         assignmentsBox.grid(row = 3, column=0, sticky='NSEW', padx = 10)
 
         def assignmentsBoxBtnAction():
-            assignmentSelect = assignmentsBox.curselection()[0]
+            try:
+                assignmentSelect = assignmentsBox.curselection()[0]
+            except IndexError:
+                return
             viewClass(Master = Master, accountID=accountID, classID= classesList[assignmentSelect][0][0])
         assignmentsBoxBtn = tk.Button(master = shell, text = 'View Class', command = assignmentsBoxBtnAction)
         assignmentsBoxBtn.grid(row = 4, column=0, sticky = 'NSEW', padx = 10, pady = 10)

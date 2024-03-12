@@ -263,7 +263,7 @@ def demodb():
                 ('Apocran', 'Doh9ootavoo', 1),
                 ('Witicher', 'Vie8eechae', 1),
                 ('Wastrid97', 'Aj7ahb6siet', 1),
-                ('Illy1973', 'rai4edoVae', 2),
+                ('Instructor', 'Instructor', 2),
                 ('Ladmis', 'oorasaBu4J', 2),
                 ('Givell', 'Kahnoh8oh', 2),
                 ('Evere1969', 'aiv7iSeeMae', 2),
