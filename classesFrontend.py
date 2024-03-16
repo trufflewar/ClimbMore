@@ -8,6 +8,7 @@ import accountsBackend as accounts
 import re
 
 
+#standard gui reset as described in accountsFrontend
 def resetGuiShell(Master):
     global shell
     for child in Master.winfo_children():
@@ -23,13 +24,16 @@ def resetGuiShell(Master):
     shell.pack(expand=True, fill = 'both')
     
 
+#show class information
 def viewClass(Master, accountID, classID):
     resetGuiShell(Master)
 
+    #get user permissions
     permissions = accounts.getPermissions(accountID)
     if permissions ==1:
         customerID = accounts.getCustomer(accountID=accountID)[0][0]
 
+    #get class details
     classDetails = backend.getClass(classID = classID)[0]
     classTypeDetails = backend.getClassType(classTypeID=classDetails[1])[0]
     classDateTime = datetime.datetime.strptime(classDetails[3], '%Y-%m-%d %H:%M:%S')
@@ -39,6 +43,7 @@ def viewClass(Master, accountID, classID):
     else:
         titleText = classTypeDetails[1]
 
+    #config gui
     shell.grid_rowconfigure(0, weight = 1)
     shell.grid_rowconfigure(1, weight = 2)
     shell.grid_rowconfigure(2, weight = 2)
@@ -46,6 +51,7 @@ def viewClass(Master, accountID, classID):
     shell.grid_columnconfigure(0, weight = 4)
     shell.grid_columnconfigure(1, weight = 2)
 
+    #addd info widgtes
     title = tk.Label(master = shell, text = titleText, font = ('Arial Bold', 20))
     title.grid(row = 0, column = 0, columnspan=2, sticky='W', pady=5, padx= 10)
 
@@ -55,6 +61,7 @@ def viewClass(Master, accountID, classID):
     description = tk.Label(master = shell, text = classTypeDetails[2], font = ('Arial', 12))
     description.grid(row = 2, column = 0, columnspan=2, sticky = 'NSW', pady = (15,0))
 
+    #check if booked and give option to boook/cancel if customer is logged in
     if permissions ==1:
         shell.grid_rowconfigure(4, weight = 2)
         #customer stuff
@@ -94,6 +101,8 @@ def viewClass(Master, accountID, classID):
     
     shell.grid_rowconfigure(5, weight = 2)
 
+
+    #show assigned instructors
     if len(backend.getAssignment(classID = classID))!=0:
 
         instructorsSubtitle = tk.Label(master = shell, text = 'Instructors', font = ('Arial Bold', 16))
@@ -114,26 +123,34 @@ def viewClass(Master, accountID, classID):
         
 
 
+
+#shows list of classes to slect from
 def viewClasses(Master, accountID, classesList, titleText):
     resetGuiShell(Master)
 
+    #configure grid
     shell.grid_rowconfigure(0, weight =1)
     shell.grid_rowconfigure(1, weight = 6)
     shell.grid_rowconfigure(2, weight = 1)
 
     shell.grid_columnconfigure(0,weight=1)
 
+
+    #show title
     titleLabel = tk.Label(master = shell, text = titleText, font = ('Arial Bold', 20))
     titleLabel.grid(row = 0, column = 0, sticky = 'NSEW', padx = 10, pady = 10)
 
+    #get names and dates of each class
     dates = [datetime.datetime.strptime(classSelect[3], '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%y') for classSelect in classesList]
     names = [backend.getClassType(classTypeID=classSelect[1])[0][1] for classSelect in classesList]
-        
+
+    #nicely fomratted names
     options = []
     for index in range(len(names)):
         options.append(names[index] + ' - ' + dates[index])
     optionsVar = tk.StringVar(value=options)
 
+    #listbox
     classesBox = tk.Listbox(master = shell, listvariable=optionsVar, selectmode='single')
     classesBox.grid(row = 1, column=0, sticky='NSEW', padx = 10)
 
@@ -141,16 +158,18 @@ def viewClasses(Master, accountID, classesList, titleText):
     selectBtn.grid(row = 2, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
 
-
+#show list of class types to slect from
 def classTypesMenu(Master, accountID):
     resetGuiShell(Master)
 
+    #configure grid
     shell.grid_rowconfigure(0, weight =1)
     shell.grid_rowconfigure(1, weight = 6)
     shell.grid_rowconfigure(2, weight = 1)
 
     shell.grid_columnconfigure(0,weight=1)
 
+    #get classtypes from db
     classTypes = backend.getClassType()
     options = [classType[1] for classType in classTypes]
     optionsVar = tk.StringVar(value= options)
@@ -161,6 +180,7 @@ def classTypesMenu(Master, accountID):
     choicesBox = tk.Listbox(master = shell, listvariable=optionsVar, selectmode='single')
     choicesBox.grid(row = 1, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
+    #create slectt option
     def chooseAction():
         classTypesIndex = choicesBox.curselection()[0]
         classTypeID = classTypes[classTypesIndex][0]
@@ -171,10 +191,11 @@ def classTypesMenu(Master, accountID):
     chooseBtn.grid(row = 2, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
 
-
+#view classes by caledar
 def viewCalendar(Master, accountID):
     resetGuiShell(Master)
 
+    #grid config
     shell.grid_rowconfigure(0, weight = 1)
     shell.grid_rowconfigure(1, weight = 4)
     shell.grid_rowconfigure(1, weight = 4)
@@ -185,10 +206,11 @@ def viewCalendar(Master, accountID):
     global selectedDayClasses
     selectedDayClasses = tk.StringVar(value = [])
 
+    #title
     titleLabel = tk.Label(master = shell, text = 'Calendar', font = ('Arial Bold', 20))
     titleLabel.grid(row = 0, column = 0, sticky='NSEW')
 
-
+    #get today configure calendar
     today = datetime.datetime.today()
     cal = tkcalendar.Calendar(shell, selectmode="day",
                           year=today.year,
@@ -199,7 +221,7 @@ def viewCalendar(Master, accountID):
                selectbackground = "orange")
     cal.grid(row = 1, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
-
+    #create class for classes
     class Class:
         def __init__(self, time, name, classID):
             self.time = time
@@ -208,10 +230,11 @@ def viewCalendar(Master, accountID):
 
         def checkFull():
             return True
-            #final program will include this method to check if the class is full adn then add colour formatting
+            #TODO future program will include this method to check if the class is full adn then add colour formatting
 
     classes = []
 
+    #create subroutine to populates classes 2D list with class objects for each class on each day in that month
     def updateMonth(event):
         global classes
         date = cal.get_date()
@@ -265,6 +288,7 @@ def viewCalendar(Master, accountID):
     classesBox = tk.Listbox(shell, listvariable = selectedDayClasses, selectmode = 'browse')
     classesBox.grid(row = 2, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
+    #select button
     def selectClassFunc():
         date = cal.get_date()
         date = datetime.datetime.strptime(date, '%m/%d/%y')
@@ -287,7 +311,7 @@ def viewCalendar(Master, accountID):
 
 
 
-
+#UNUSED - future development to inlcude this option to search classes by name
 def searchClassesMenu(Master, accountID):
     resetGuiShell(Master)
 
@@ -323,10 +347,11 @@ def searchClassesMenu(Master, accountID):
 
 
 
-
+#menu for all options to sreach classes by
 def findClassesMenu(Master, accountID):
     resetGuiShell(Master)
     
+    #grid configure
     shell.grid_rowconfigure(0, weight = 1)
     shell.grid_rowconfigure(1, weight = 3)
     shell.grid_rowconfigure(2, weight = 3)
@@ -334,7 +359,7 @@ def findClassesMenu(Master, accountID):
     shell.grid_columnconfigure(0, weight = 1)
     shell.grid_columnconfigure(1, weight = 1)
 
-
+    #add widgtes
     findClassesTitle = tk.Label(master = shell, text = 'Find Classes', font = ('Arial Bold', 20))
     findClassesTitle.grid(row = 0, column = 0, columnspan = 2, sticky = 'NSEW', padx = 10, pady = 10)
 
@@ -354,22 +379,24 @@ def findClassesMenu(Master, accountID):
 
 
 
-
+#menu to add instructors after a class creation
 def addInstructors(Master, accountID, classID):
     noInstructors = backend.getClassType(classTypeID=backend.getClass(classID)[0][1])[0][6]
     noInstructors = 0 if noInstructors==None else noInstructors
 
+    #retunr to menu if no instructos required for class
     if noInstructors == 0:
         classesMenu(Master, accountID)
     else:
     
         resetGuiShell(Master)
-
+        
+        #configure
         shell.grid_rowconfigure(0, weight =2 )
         titleLabel = tk.Label(master = shell, text = 'Assign Instructor', font = ('Arial Bold', 20))
         titleLabel.grid(row = 0, column = 0, sticky='W', pady=5, padx= 10)
 
-
+        #gte info
         allInstructors = [instructor[0] for instructor in accounts.getInstructor()]
 #        assigned = [assignment[2] for assignment in backend.getAssignment(classID)]
 #        unassigned = [instructor for instructor in allInstructors if instructor not in assigned]
@@ -379,15 +406,16 @@ def addInstructors(Master, accountID, classID):
 
         instructors = []
         chosen = []
- 
+
+
+        #create dropdown boxes based on num of instructors required
         for i in range(noInstructors):
             shell.grid_rowconfigure(i+1, weight =2 )
             chosen.append(tk.StringVar(value = options[0]))
             instructors.append(tk.OptionMenu(shell, chosen[i], *options))
             instructors[i].grid(row = i+1, column = 0, sticky = 'NSEW', padx = 10)
 
-
-
+        #add instructor button checksfor suplicates instructors and raises messagebox to inform user if so
         shell.grid_rowconfigure(noInstructors+2, weight =2 )
         def addBtnAction(Master, accountID):
            chosenGot = [chosenOne.get() for chosenOne in chosen]
@@ -410,10 +438,11 @@ def addInstructors(Master, accountID, classID):
 
 
 
-
+#Add class instamce
 def addClass(Master, accountID):
     resetGuiShell(Master)
 
+    #grid configure
     shell.grid_rowconfigure(0, weight = 2)
     shell.grid_rowconfigure(1, weight = 2)
     shell.grid_rowconfigure(2, weight = 2)
@@ -424,6 +453,7 @@ def addClass(Master, accountID):
     shell.grid_columnconfigure(0, weight = 1)
     shell.grid_columnconfigure(1, weight = 1)
 
+    #add title, entry boxes, dropdowns etc
     titleLabel = tk.Label(shell, text = 'Schedule Class', font = ('Arial Bold', 20))
     titleLabel.grid(row = 0, column = 0, columnspan=2, sticky = 'NSEW')
 
@@ -594,6 +624,7 @@ def addClassType(Master, accountID):
             messagebox.showerror('Class Type Error', 'Cannot have a class type with no length')
             return
         
+        #add to db
         backend.addClassType(name = name.get(),
                              description= descriptionEntry.get('1.0', tk.END) if descriptionEntry.get('1.0', tk.END)!= '' and descriptionEntry.get('1.0', tk.END) != '\n' else None,
                              lowerAge = int(lowerAge.get()) if lowerAgeBool.get() ==1 else None,
@@ -610,7 +641,7 @@ def addClassType(Master, accountID):
     addButton.grid(row = 9, column = 0, columnspan = 3, sticky = 'NSEW', pady = 5)
 
 
-
+#main classes menu
 def classesMenu(Master, accountID):
     resetGuiShell(Master)
     shell.grid_rowconfigure(0, weight = 1)
@@ -625,6 +656,7 @@ def classesMenu(Master, accountID):
     viewClassesBtn = tk.Button(master = shell, text = 'Find Classes', command = lambda: findClassesMenu(Master=Master, accountID=accountID))
     viewClassesBtn.grid(row = 1, column = 0, sticky = 'NSEW', padx = 10)
     
+    #show booked classes for customer
     if accounts.getPermissions(accountID) == 1:
         shell.grid_rowconfigure(2, weight = 2)
         shell.grid_rowconfigure(3, weight = 10)
@@ -658,7 +690,7 @@ def classesMenu(Master, accountID):
         bookingsBoxBtn.grid(row = 4, column=0, sticky = 'NSEW', padx = 10, pady = 10)
         
 
-
+    #show assinged classes for instructors
     elif accounts.getPermissions(accountID) == 2 or accounts.getPermissions(accountID) == 3:
         shell.grid_rowconfigure(2, weight = 2)
         shell.grid_rowconfigure(3, weight = 10)

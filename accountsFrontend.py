@@ -9,10 +9,13 @@ from tkinter import ttk
 import re
 
 
+#RESET CONTENT GUI FRAME
 def resetGuiShell(Master):
     global shell
+    #Delete child widgets
     for child in Master.winfo_children():
         child.pack_forget()
+    #Delete window (ignore tclerror where applicationm already destroyed, ignore name error)
     try:
         if shell is not None:
             shell.destroy()
@@ -20,16 +23,21 @@ def resetGuiShell(Master):
         pass
     except tk.TclError:
         pass
+    #create new shell frame within master
     shell= tk.Frame(master = Master)
     shell.pack(expand=True, fill = 'both')
     
 
+#CHANGE EMAIL
 def changeEmail(customerID, staff):
+    #create ppuop tk toplevel that will
     popUp = tk.Toplevel()
     popUp.title("Change Email")
     
     popUp.grid_columnconfigure(0, weight=4)
     popUp.grid_columnconfigure(1, weight = 7)
+
+    #populate gui with title and entryboxes
 
     titleLabel = tk.Label(master = popUp, text = 'Change Email', font = ('Arial Bold', 20))
     titleLabel.grid(row = 0, column = 0, columnspan=2, sticky='W', pady=5, padx= 10)
@@ -64,6 +72,7 @@ def changeEmail(customerID, staff):
     changeBtn = tk.Button(master = popUp, text = "Change", command=changeBtnAction)
     changeBtn.grid(row = 3, column = 0, columnspan = 2)
 
+    #configure window closure
     popUp.protocol("WM_DELETE_WINDOW", lambda: popUp.destroy())
 
     popUp.mainloop()
@@ -71,14 +80,17 @@ def changeEmail(customerID, staff):
 
 
 def changePassword(accountID, staff):
+    #get username
     username = backend.getUsername(accountID)
     
+    #create popup
     popUp = tk.Toplevel()
     popUp.title("Change Password")
     
     popUp.grid_columnconfigure(0, weight=4)
     popUp.grid_columnconfigure(1, weight = 7)
 
+    #add title and boxes to gui
     titleLabel = tk.Label(master = popUp, text = 'Change Password', font = ('Arial Bold', 20))
     titleLabel.grid(row = 0, column = 0, columnspan=2, sticky='W', pady=5, padx= 10)
 
@@ -105,6 +117,7 @@ def changePassword(accountID, staff):
     confirmBox = tk.Entry(master = popUp, textvariable=confirm, show='*')
     confirmBox.grid(row = 3, column = 1, padx= 10)
 
+    #check password vald, and old password valid if customer, change password
     def changeBtnAction():
         if passwordBox.get() == confirmBox.get():
             if staff == True:
@@ -147,6 +160,8 @@ def showCustomer(Master, accountID, staff):
 
     shell.columnconfigure(0, weight = 2)
 
+    #populate GUI with information and buttosn to chaneg password and email 
+
     nameLabel = tk.Label(master = shell, text = details[3]+", "+details[2]+", "+str(age)+"yrs", font = ('Arial Bold', 20))
     nameLabel.grid(row = 0, column = 0, columnspan=2, sticky='W', pady=5, padx= 10)
 
@@ -180,6 +195,8 @@ def showInstructor(Master, accountID, admin):
 
     shell.grid_columnconfigure(0, weight = 2)
 
+    #add information and buttons
+
     nameLabel = tk.Label(master = shell, text = details[2], font = ('Arial Bold', 20))
     nameLabel.grid(row = 0, column = 0, columnspan=2, sticky='W', pady=5, padx= 10)
 
@@ -196,16 +213,17 @@ def showInstructor(Master, accountID, admin):
     changePasswordBtn = tk.Button(master = shell, text = 'Change Password', command = lambda: changePassword(accountID, admin))
     changePasswordBtn.grid(row = 3, column = 0, columnspan = 2, sticky = 'W', padx = 10)
 
-    #TODO cahnge password and email
-    #TODO deal with closing pop ups crashing program
 
 
 
 def addCustomer(Master, accountID):
     resetGuiShell(Master)
 
+    #config GUI
     shell.grid_columnconfigure(0, weight=3)
     shell.grid_columnconfigure(1, weight =7)
+
+    #addd title and entry boxes, dropdowns, checkboxes etc
 
     titleLabel = tk.Label(master = shell, text = "Add Customer", font=("Arial Bold", 20))
     titleLabel.grid(row = 0, column = 0, columnspan = 2, sticky = 'W', padx = 10, pady = 5)
@@ -263,6 +281,8 @@ def addCustomer(Master, accountID):
     safetyBriefBox = tk.Checkbutton(master = shell, text = 'Customer has completed safety briefing and signed waiver.', variable = safetyBrief, onvalue=1, offvalue=0, font=("Arial", 16))
     safetyBriefBox.grid(row = 9, column = 0, columnspan=2, sticky = 'W', padx = 15, pady = 5)
 
+
+    #validate all entries, rasie error messagebox if not
     def addCustomerAction():
         if fname.get() == '' or sname.get() == '':
             messagebox.showerror('Name Error', 'Name fields cannot be blank.')
@@ -286,6 +306,7 @@ def addCustomer(Master, accountID):
             messagebox.showerror('Account Error', 'Customer must complete safety brief')
             return
         else:
+            #if no invalid problems, add customer and rteurn
             backend.addNewCustomer(username.get(), password.get(), fname.get(), sname.get(), email.get(), dobDropDown.get_date())
             accountsMenu(Master=Master, accountID=accountID)
 
@@ -293,12 +314,14 @@ def addCustomer(Master, accountID):
     addCustomerBtn.grid(row = 10, column = 0, columnspan=2, sticky = 'NSEW', pady = 10)
 
 
+#ADD STAFF
 def addStaff(Master, accountID):
     resetGuiShell(Master)
 
     shell.grid_columnconfigure(0, weight=3)
     shell.grid_columnconfigure(1, weight =7)
 
+    #add UI labels and entryboxes
     titleLabel = tk.Label(master = shell, text = "Add Instructor", font=("Arial Bold", 20))
     titleLabel.grid(row = 0, column = 0, columnspan = 2, sticky = 'W', padx = 10, pady = 5)
 
@@ -350,6 +373,7 @@ def addStaff(Master, accountID):
     adminBox = tk.Checkbutton(master = shell, text = 'Instructor is admin', variable = admin, onvalue=1, offvalue=0, font=("Arial", 16))
     adminBox.grid(row = 8, column = 0, columnspan=2, sticky = 'W', padx = 15, pady = 5)
 
+    #validate all inputs , raise errors if detected, otherwise write to database
     def addStaffAction():
         if name.get() == '':
             messagebox.showerror('Name Error', 'Name field cannot be blank.')
@@ -381,13 +405,14 @@ def addStaff(Master, accountID):
 
 
 
-
+#SEARCH CUSTOMERS BY NAME OR EMAIL
 def searchCustomers(Master, accountID):
     resetGuiShell(Master)
 
     titleLabel = tk.Label(master = shell, text = "Search Customers", font=("Arial Bold", 20))
     titleLabel.grid(row = 0, column = 0, columnspan = 2, sticky = 'W', padx = 10, pady = 5)
 
+    #Add ui labels and entryboxes
     fnameLabel = tk.Label(master = shell, text = "Firstname", font=("Arial", 16))
     fnameLabel.grid(row = 1, column = 0, sticky = 'W', padx = 15, pady = 5)
     fname = tk.StringVar()
@@ -406,6 +431,7 @@ def searchCustomers(Master, accountID):
     emailEntry = tk.Entry(master = shell, textvariable=email)
     emailEntry.grid(row = 4, column=1)
 
+    #clean inputs, get results and send results to viewCustomers
     def searchCustomersAction():
         fnameSearch = fname.get() if fname.get()!='' else None
         snameSearch = sname.get() if sname.get()!='' else None
@@ -419,10 +445,11 @@ def searchCustomers(Master, accountID):
     searchBtn.grid(row= 5, column = 0, columnspan = 2)
 
 
-
+#VIEW CUSTOMERS
 def viewCustomers(Master, customerList, search, accountID):
     resetGuiShell(Master)
 
+    #select widnow title
     if search:
         title = 'Customer Search Results'
     else:
@@ -431,6 +458,7 @@ def viewCustomers(Master, customerList, search, accountID):
     shell.grid_columnconfigure(0, weight=2)
     shell.grid_columnconfigure(1, weight = 1)
 
+    #create title and listbox to slect from, with buttons to add, view delete
 
     titleLabel = tk.Label(master = shell, text = title, font=("Arial Bold", 20))
     titleLabel.grid(row = 0, column = 0, columnspan = 2, sticky = 'W', padx = 10, pady = 5)
@@ -458,7 +486,7 @@ def viewCustomers(Master, customerList, search, accountID):
     delButton.grid(row = 3, column = 1)
 
 
-
+#VIEW STAFF - carbon copy of view customers subrountine except just takes list of all staf, instead of a select set
 def viewAllStaff(Master, accountID):
     resetGuiShell(Master)
 
@@ -482,7 +510,7 @@ def viewAllStaff(Master, accountID):
     viewButton.grid(row = 2, column = 1)
 
     def deleteAction():
-        if messagebox.askokcancel("Customer Deletion", "Please confirm customer deletion"):
+        if messagebox.askokcancel("Instructor Deletion", "Please confirm instructor deletion"):
             index = staffListbox.curselection()[0]
             instructorID = staffList[index][0]
             backend.removeInstructor(instructorID=instructorID)
@@ -493,7 +521,7 @@ def viewAllStaff(Master, accountID):
     delButton.grid(row = 3, column = 1)
 
 
-
+#call viewCiustomers subroutine with a list of all customers passed to it
 def viewAllCustomers(Master, accountID):
     customerList = backend.getCustomer()
     viewCustomers(Master, customerList, False, accountID)
@@ -502,13 +530,13 @@ def viewAllCustomers(Master, accountID):
 
 #MAIN MENU for CUSTOMER MANAGEMENT
 def accountsMenu(Master, accountID):
+    #check permissions, if customer send to view thir account otherwise show menu
     if backend.getPermissions(accountID) == 1:
         showCustomer(Master, backend.getCustomer(accountID=accountID)[0][1], False)
-
     else:
         resetGuiShell(Master)
 
-        #literally the only way to fix the weird formatting issues :/
+        #literally the only way to fix the weird formatting issues :/ - configure grid
         shell.grid_rowconfigure(0, weight=1)
         shell.grid_rowconfigure(1, weight=3)
         shell.grid_rowconfigure(2, weight=3)
@@ -516,6 +544,8 @@ def accountsMenu(Master, accountID):
         shell.grid_rowconfigure(6, weight=3)
 
         shell.grid_columnconfigure(0, weight = 1)
+
+        #add buttons with extra admin level menus if an admin islogged in
 
         accountsTitle = tk.Label(master = shell, text = "Accounts", font=("Arial Bold", 20))
         accountsTitle.grid(row = 0, column = 0, sticky = 'NSEW')
@@ -538,9 +568,7 @@ def accountsMenu(Master, accountID):
 
             viewStaffBtn = tk.Button(master = shell, text = "View Instructors", command = lambda: viewAllStaff(Master = Master, accountID=accountID))
             viewStaffBtn.grid(row =5 , column = 0, sticky = 'NSEW')
-            
-            #Admin level stuff here - add staff, view staff etc 
-        
+
 
         myAccountBtn = tk.Button(master = shell, text = "My Account", command = lambda: showInstructor(Master=Master, accountID=accountID, admin = False))
         myAccountBtn.grid(row=6, column = 0, sticky = 'NSEW')
@@ -548,7 +576,8 @@ def accountsMenu(Master, accountID):
 
 
 
-#TEST CODE -style code should be implemented sta start of main script so all code runs correctly (specifcally the calendar UI)
+#TEST CODE 
+#TODO style code should be implemented at start of main gui script so all code runs correctly (specifcally the calendar UI)
 #window = tk.Tk()
 #window.minsize(500,500)
 #shell = tk.Frame()

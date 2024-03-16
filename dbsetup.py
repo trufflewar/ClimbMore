@@ -222,6 +222,7 @@ def initdb(path="main.db"):
 
 
 def removedb(path="main.db"):
+    #remove exisiting databse if exists
     try:
         os.remove(path)
         print("Deleted file at '" + path + "'")
@@ -249,7 +250,7 @@ def demodb():
     #POTENTIAL OPTION - could simplify and optimise following: rentals
 
     #ALSO RECOGNISED - was this an actual input system it would be very easy for sql injection
-    #Actual system will use proper method using ?s and other tuples
+    #Actual system will use proper method using ?s and input tuples
 
 
     #Fill accounts table with demo data - have to use loop as SQLITE3 does not support adding multiple records in one go
@@ -402,8 +403,8 @@ def demodb():
             f"""(1, NULL, '{now-datetime.timedelta(days = 6, hours = 8,)}')""", #4pm 7 days ago
             f"""(1, NULL, '{now+datetime.timedelta(days = 0, hours = 16)}')""", #4pm today
             f"""(1, NULL, '{now+datetime.timedelta(days = 7, hours = 16)}')""", #4pm next week
-            f"""(1, NULL, '{now+datetime.timedelta(days = 14, hours = 16)}')""", #etc
-            f"""(1, NULL, '{now+datetime.timedelta(days = 21, hours = 16)}')""",
+            f"""(1, NULL, '{now+datetime.timedelta(days = 14, hours = 16)}')""", #4pm week after
+            f"""(1, NULL, '{now+datetime.timedelta(days = 21, hours = 16)}')""",   #etc
             f"""(1, NULL, '{now+datetime.timedelta(days = 28, hours = 16)}')""",
             f"""(2, NULL, '{now+datetime.timedelta(days = 3, hours = 18)}')""",
             f"""(2, NULL, '{now+datetime.timedelta(days = 10, hours = 18)}')""",
