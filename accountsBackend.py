@@ -2,9 +2,10 @@
 import datetime
 import dbaccess as db
 import datetime
-from argon2 import PasswordHasher
+from argon2 import PasswordHasher, exceptions
 import re
 from dateutil import relativedelta
+
 
 ph = PasswordHasher()
 
@@ -60,10 +61,11 @@ def login(username, password):
     else:
          return 'WrongUsername'
 
+    try:
     #check password
-    if ph.verify(details[1], password) == True:
-        return 'LoggedIn'+str(details[0])
-    else:
+        if ph.verify(details[1], password) == True:
+            return 'LoggedIn'+str(details[0])
+    except exceptions.VerifyMismatchError:
         return 'WrongPassword'
     
 
