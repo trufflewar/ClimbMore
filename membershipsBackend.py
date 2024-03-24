@@ -1,7 +1,7 @@
 import datetime
 import dbaccess as db
 import datetime
-from accountsBackend import checkAdult
+from accountsBackend import getAge
 
 
 #search membership types
@@ -65,7 +65,7 @@ def buyMembership(membershipID, adult1 = None, adult2 = None, kid1 = None, kid2 
     #add params
     for member in members:
         if members[member] != None:
-            if ('adult' in member and checkAdult(members[member]) == True) or ('kid' in member and checkAdult(members[member]) == False):
+            if ('adult' in member and getAge(members[member]) >=18) or ('kid' in member and getAge(members[member]) <=17):
                 command = command + member + ', '
                 count += 1
                 values.append(members[member])

@@ -277,8 +277,8 @@ def demodb():
 
     #Fill customers table with demo data
     customers = ["""(1, 'Andre', 'Kerstetter', 'AndreSKerstetter@dayrep.com', '2001-03-21')""",
-                """(2, 'Declan', 'Gray', 'DeclanGray@rhyta.com', '2003-08-13')""",
-                """(3, 'Ewan', 'Chamberlain', 'EwanChamberlain@rhyta.com', '2013-02-27')""",
+                """(2, 'Declan', 'Gray', 'DeclanGray@rhyta.com', '2006-01-01')""",
+                """(3, 'Ewan', 'Chamberlain', 'EwanChamberlain@rhyta.com', '2016-02-27')""",
                 """(4, 'Ryan', 'Bates', 'RyanBates@rhyta.com', '1976-05-25')""",
                 """(5, 'Tegan', 'O''Connor', 'TeganOConnor@dayrep.com', '1972-05-18')""",
                 """(6, 'Caitlin', 'Saunders', 'CaitlinSaunders@teleworm.us', '2009-12-14')""",

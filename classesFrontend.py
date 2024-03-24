@@ -71,8 +71,16 @@ def viewClass(Master, accountID, classID):
             booking.grid(row = 4, column = 0, sticky = 'NSW', pady = (15,0))
 
             def bookClassAction():
+                if classTypeDetails[3]!=None:
+                    if accounts.getAge(customerID)<classTypeDetails[3]:
+                        messagebox.showerror('Class Booking Error', 'You are under the age limit for this class' )
+                        return
+                if classTypeDetails[4]!=None:
+                    if accounts.getAge(customerID)>classTypeDetails[4]:
+                        messagebox.showerror('Class Booking Error', 'You are over the age limit for this class' )
+                        return
                 if bool(messagebox.askokcancel('Booking Class', 'Are you sure you want to book this class?'))==True:
-                    if classTypeDetails[5]==None or len(backend.getBookings(classID=classID)) < classTypeDetails[5]:
+                    if classTypeDetails[5]==None or len(backend.getBookings(classID=classID)) <= classTypeDetails[5]-1:
                         backend.addBooking(classID=classID, customerID=customerID)
                         viewClass(Master, accountID, classID)
                     else:
@@ -488,12 +496,12 @@ def addClass(Master, accountID):
     timePicker.grid_rowconfigure(0, weight = 1)
 
     hours = tk.StringVar()
-    hoursBox = tk.Spinbox(master = timePicker, from_=0, to= 23, textvariable=hours, width=2, format="%02.0f")
+    hoursBox = tk.Spinbox(master = timePicker, from_=0, to= 23, textvariable=hours, width=2, format="%02.0f", state = 'readonly')
     hoursBox.grid(row = 0, column = 0)
     colon = tk.Label(master = timePicker, text = ':')
     colon.grid(row = 0, column = 1)
     minutes = tk.StringVar()
-    minutesBox = tk.Spinbox(master = timePicker, from_ = 00, to = 59, textvariable=minutes, width=2, format="%02.0f")
+    minutesBox = tk.Spinbox(master = timePicker, from_ = 00, to = 59, textvariable=minutes, width=2, format="%02.0f", state = 'readonly')
     minutesBox.grid(row =0, column = 2)
 
     nameBoxLabel = tk.Label(master = shell, text = 'Enter Alternative Name', font = ('Arial', 14))
@@ -593,12 +601,12 @@ def addClassType(Master, accountID):
     lengthPicker.grid_rowconfigure(0, weight = 1)
 
     hours = tk.StringVar()
-    hoursBox = tk.Spinbox(master = lengthPicker, from_=0, to= 23, textvariable=hours, width=2, format="%02.0f")
+    hoursBox = tk.Spinbox(master = lengthPicker, from_=0, to= 23, textvariable=hours, width=2, format="%02.0f", state = 'readonly')
     hoursBox.grid(row = 0, column = 0)
     colon = tk.Label(master = lengthPicker, text = ':')
     colon.grid(row = 0, column = 1)
     minutes = tk.StringVar()
-    minutesBox = tk.Spinbox(master = lengthPicker, from_ = 00, to = 59, textvariable=minutes, width=2, format="%02.0f")
+    minutesBox = tk.Spinbox(master = lengthPicker, from_ = 00, to = 59, textvariable=minutes, width=2, format="%02.0f", state = 'readonly')
     minutesBox.grid(row =0, column = 2)
 
     priceLabel = tk.Label(master = shell, text = 'Price (£)', font = ('Arial', 16))
@@ -611,8 +619,15 @@ def addClassType(Master, accountID):
 
     def addClassTypeAction(Master, accountID):
         #Error checking
+        classTypes = []
+        for classType in backend.getClassType():
+            classTypes.append(classType[1])
+
         if name.get() == '':
             messagebox.showerror('Class Type Error', 'Name field must be filled')
+            return
+        elif name.get() in classTypes:
+            messagebox.showerror('Class Type Error', 'A class type with this name already exists')
             return
         elif bool(re.match(r'^\d+(\.\d{1,2})?$', price.get()))==False:
             messagebox.showerror('Class Type Error', 'Price must be a decimal rounded to 2 decimal places')
@@ -739,12 +754,16 @@ def classesMenu(Master, accountID):
             addClassTypeBtn.grid(row = 6, column = 0, sticky = 'NSEW', padx = 5, pady = 5)
 
 
+#for x in range(12):
+#    backend.addBooking(classID=1, customerID = 1)
+
 #window = tk.Tk()
 #window.minsize(300,300)
 #shell = tk.Frame()
-##style = ttk.Style(window)
+#style = ttk.Style(window)
 #style.theme_use('alt')
-#classesMenu(window, 1) #customer test
+#viewClass(window, 4, 1)
+#classesMenu(window, 2) #customer test
 #classesMenu(window, 11) # non admin staff test
 #classesMenu(window, 15) # admin test
 #window.mainloop()

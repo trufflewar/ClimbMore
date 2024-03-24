@@ -146,7 +146,7 @@ def getPermissions(accountID):
 
 
 #CHECK IF ADULT
-def checkAdult(customerID):
+def getAge(customerID):
     #get DOB from rel acc id
     DOB = db.executeSQL('SELECT DOB FROM Customers WHERE customerID = ?', (customerID,))[0][0]
 
@@ -155,11 +155,7 @@ def checkAdult(customerID):
     today = datetime.datetime.now().replace(microsecond = 0, second = 0, minute = 0, hour = 0)
     yearsOld = relativedelta.relativedelta(today, DOB).years
 
-    #return respective boolean vlue
-    if yearsOld>=18:
-        return True
-    else:
-        return False
+    return yearsOld
 
 
 #EDIT INSTRUCTOR
@@ -249,14 +245,14 @@ def addCertType(certName, default = False):
 
 
 
-#EMIL VERFICATION
+#EMAIL VERFICATION
 def verifyEmail(email):
     #uses a regex pattern to fully validate all emails input
     return bool(re.fullmatch(r'^[\w\.-]+@[\w\.-]+\.\w+$', email))
 #TODO have this send email to check verification
 
 
-#GET USERNAMEE
+#GET USERNAME
 def getUsername(accountID):
     #return the repsctive username for an accounID, if the account exists
     try:
